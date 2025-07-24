@@ -1,207 +1,462 @@
-# Azure DevOps Deployment Guide
+# AWS Deployment Guide
 
-This guide will help you deploy the Attendance Tracker application to Azure using Azure DevOps pipelines.
+This guide will help you deploy the Attendance Tracker application to AWS using multiple deployment options.
 
 ## Prerequisites
 
-1. **Azure Subscription** - You'll need an active Azure subscription
-2. **Azure DevOps Account** - Sign up at [dev.azure.com](https://dev.azure.com)
-3. **Git Repository** - Your code should be in Azure Repos, GitHub, or another Git provider
+1. **AWS Account** - You'll need an active AWS account
+2. **AWS CLI** - Install and configure AWS CLI
+3. **Git Repository** - Your code should be in GitHub, GitLab, or AWS CodeCommit
+4. **Node.js** - Version 16+ for local development and testing
 
-## Step 1: Set Up Azure Resources
+## Deployment Options
 
-### 1.1 Create Azure App Service
-1. Go to [Azure Portal](https://portal.azure.com)
-2. Click **"Create a resource"** → **"Web App"**
-3. Fill in the details:
-   - **Subscription**: Your Azure subscription
-   - **Resource Group**: Create new or use existing
-   - **Name**: `attendance-app-[your-suffix]` (must be globally unique)
-   - **Publish**: Code
-   - **Runtime stack**: Node 18 LTS
-   - **Operating System**: Linux (recommended) or Windows
-   - **Region**: Choose closest to your users
-   - **App Service Plan**: Create new (Basic B1 or higher)
+We'll cover three main deployment approaches:
+1. **AWS Elastic Beanstalk** (Recommended for beginners)
+2. **AWS EC2** (More control and customization)
+3. **AWS App Runner** (Container-based, simple setup)
 
-4. Click **"Review + create"** → **"Create"**
+---
 
-### 1.2 Note Down App Service Details
-- **App Name**: `attendance-app-[your-suffix]`
-- **Resource Group**: Your resource group name
-- **Subscription ID**: Found in subscription overview
+## Option 1: AWS Elastic Beanstalk (Recommended)
 
-## Step 2: Set Up Azure DevOps Project
+### 1.1 Install AWS CLI and EB CLI
 
-### 2.1 Create New Project
-1. Go to [Azure DevOps](https://dev.azure.com)
-2. Click **"New Project"**
-3. Enter project name: `attendance-tracker`
-4. Set visibility to **Private**
-5. Click **"Create"**
+```bash
+# Install AWS CLI (if not already installed)
+# Windows (PowerShell)
+msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
 
-### 2.2 Import or Create Repository
-**Option A: Import from existing repository**
-1. Go to **Repos** → **Import**
-2. Enter your repository URL
-3. Click **Import**
+# Configure AWS CLI
+aws configure
+# Enter your AWS Access Key ID, Secret Access Key, and Default region
 
-**Option B: Upload your code**
-1. Go to **Repos** → **Files**
-2. Click **"Upload files"**
-3. Upload all your project files
-
-## Step 3: Create Service Connection
-
-### 3.1 Set Up Azure Service Connection
-1. Go to **Project Settings** (gear icon) → **Service connections**
-2. Click **"New service connection"** → **"Azure Resource Manager"**
-3. Choose **"Service principal (automatic)"**
-4. Select your **Azure subscription**
-5. Select your **Resource group**
-6. Name it: `azure-subscription-connection`
-7. Click **"Save"**
-
-## Step 4: Configure Pipeline
-
-### 4.1 Update Pipeline Variables
-Edit the `azure-pipelines.yml` file in your repository:
-
-```yaml
-variables:
-  # Update this to match your service connection name
-  azureSubscription: 'azure-subscription-connection'
-  
-  # Update this to match your App Service name
-  webAppName: 'attendance-app-[your-suffix]'
-  
-  # Update this to match your environment name
-  environmentName: 'attendance-app-production'
+# Install EB CLI
+pip install awsebcli --upgrade --user
 ```
 
-### 4.2 Create Pipeline
-1. Go to **Pipelines** → **Create Pipeline**
-2. Choose **"Azure Repos Git"** (or your repository source)
-3. Select your repository
-4. Choose **"Existing Azure Pipelines YAML file"**
-5. Select `/azure-pipelines.yml`
-6. Click **"Continue"** → **"Run"**
+### 1.2 Initialize Elastic Beanstalk Application
 
-## Step 5: Configure Environment
+```bash
+# In your project directory
+eb init
 
-### 5.1 Create Environment
-1. Go to **Pipelines** → **Environments**
-2. Click **"New environment"**
-3. Name: `attendance-app-production`
-4. Resource: **None**
-5. Click **"Create"**
-
-### 5.2 Add Approval (Optional)
-1. Click on your environment
-2. Go to **Approvals and checks**
-3. Add **"Approvals"** if you want manual approval before deployment
-
-## Step 6: Configure App Service Settings
-
-### 6.1 Set Environment Variables (if needed)
-1. Go to Azure Portal → Your App Service
-2. Go to **Configuration** → **Application settings**
-3. Add any environment variables your app needs:
-   - `NODE_ENV`: `production`
-   - `PORT`: `8080` (or leave default)
-
-### 6.2 Configure Startup Command
-1. In **Configuration** → **General settings**
-2. Set **Startup Command**: `npm start`
-
-## Step 7: Deploy
-
-### 7.1 Trigger Deployment
-1. Make a change to your code
-2. Commit and push to your main/master branch
-3. The pipeline will automatically trigger
-4. Monitor the deployment in **Pipelines** → **Runs**
-
-### 7.2 Verify Deployment
-1. Once deployment completes, visit your App Service URL:
-   `https://attendance-app-[your-suffix].azurewebsites.net`
-2. Test the attendance marking functionality
-
-## Step 8: Set Up Continuous Deployment
-
-The pipeline is configured to automatically deploy when you push to the main/master branch. To modify this:
-
-1. Edit `azure-pipelines.yml`
-2. Modify the `trigger` section:
-```yaml
-trigger:
-- main      # Deploy on push to main branch
-- develop   # Also deploy on push to develop branch
+# Follow the prompts:
+# - Select a default region (e.g., us-east-1)
+# - Create new application: attendance-tracker
+# - Platform: Node.js
+# - Platform version: Node.js 18 running on 64bit Amazon Linux 2
+# - Setup SSH: yes (recommended)
 ```
+
+### 1.3 Create Environment and Deploy
+
+```bash
+# Create environment
+eb create attendance-app-prod
+
+# Deploy your application
+eb deploy
+
+# Open application in browser
+eb open
+```
+
+### 1.4 Configure Environment Variables
+
+```bash
+# Set environment variables (if needed)
+eb setenv NODE_ENV=production PORT=8080
+
+# View current environment variables
+eb printenv
+```
+
+---
+
+## Option 2: AWS EC2 Manual Deployment
+
+### 2.1 Launch EC2 Instance
+
+1. Go to [AWS Console](https://console.aws.amazon.com) → EC2
+2. Click **"Launch Instance"**
+3. Configure instance:
+   - **Name**: `attendance-app-server`
+   - **AMI**: Amazon Linux 2023 AMI
+   - **Instance Type**: t2.micro (free tier) or t3.small
+   - **Key Pair**: Create new or use existing
+   - **Security Group**: Allow HTTP (80), HTTPS (443), SSH (22), and Custom TCP (3001)
+   - **Storage**: 8 GB (default)
+
+4. Click **"Launch Instance"**
+
+### 2.2 Connect and Set Up Server
+
+```bash
+# Connect to your instance
+ssh -i "your-key.pem" ec2-user@your-instance-public-ip
+
+# Update system
+sudo yum update -y
+
+# Install Node.js 18
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+
+# Install PM2 for process management
+sudo npm install -g pm2
+
+# Install Git
+sudo yum install -y git
+
+# Clone your repository
+git clone https://github.com/yourusername/attendance-app.git
+cd attendance-app
+
+# Install dependencies
+npm install
+
+# Start application with PM2
+pm2 start server.js --name "attendance-app"
+pm2 startup
+pm2 save
+```
+
+### 2.3 Set Up Nginx (Optional but Recommended)
+
+```bash
+# Install Nginx
+sudo yum install -y nginx
+
+# Start and enable Nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# Configure Nginx
+sudo nano /etc/nginx/conf.d/attendance-app.conf
+```
+
+Add this configuration:
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;  # Replace with your domain or public IP
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+```bash
+# Test Nginx configuration
+sudo nginx -t
+
+# Restart Nginx
+sudo systemctl restart nginx
+```
+
+---
+
+## Option 3: AWS App Runner
+
+### 3.1 Create Dockerfile
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+```
+
+### 3.2 Deploy with App Runner
+
+1. Go to AWS Console → App Runner
+2. Click **"Create service"**
+3. Choose **"Source code repository"**
+4. Connect your GitHub repository
+5. Configure:
+   - **Runtime**: Node.js 18
+   - **Build command**: `npm install`
+   - **Start command**: `npm start`
+   - **Port**: 3001
+6. Click **"Create & deploy"**
+
+---
+
+## CI/CD Setup
+
+### Option A: GitHub Actions (Recommended)
+
+Create `.github/workflows/deploy-aws.yml`:
+
+```yaml
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Deploy to Elastic Beanstalk
+      run: |
+        pip install awsebcli
+        eb deploy attendance-app-prod
+```
+
+Add these secrets to your GitHub repository:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+### Option B: AWS CodePipeline
+
+1. Go to AWS Console → CodePipeline
+2. Click **"Create pipeline"**
+3. Configure pipeline:
+   - **Pipeline name**: `attendance-app-pipeline`
+   - **Service role**: Create new role
+4. Add source stage:
+   - **Source provider**: GitHub
+   - **Repository**: Your repository
+   - **Branch**: main
+5. Add build stage:
+   - **Build provider**: AWS CodeBuild
+   - **Create build project**: attendance-app-build
+6. Add deploy stage:
+   - **Deploy provider**: AWS Elastic Beanstalk
+   - **Application**: attendance-tracker
+   - **Environment**: attendance-app-prod
+
+---
+
+## Database Upgrade for Production
+
+### Option A: Amazon RDS (Relational Database)
+
+1. Create RDS MySQL instance:
+```bash
+aws rds create-db-instance \
+    --db-instance-identifier attendance-db \
+    --db-instance-class db.t3.micro \
+    --engine mysql \
+    --master-username admin \
+    --master-user-password YourSecurePassword123 \
+    --allocated-storage 20
+```
+
+2. Update your application to use MySQL:
+```bash
+npm install mysql2
+```
+
+### Option B: Amazon DynamoDB (NoSQL)
+
+1. Create DynamoDB table:
+```bash
+aws dynamodb create-table \
+    --table-name attendance-records \
+    --attribute-definitions \
+        AttributeName=id,AttributeType=S \
+    --key-schema \
+        AttributeName=id,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST
+```
+
+2. Update your application to use DynamoDB:
+```bash
+npm install aws-sdk
+```
+
+---
+
+## Security Best Practices
+
+### 1. Environment Variables
+```bash
+# For Elastic Beanstalk
+eb setenv NODE_ENV=production
+eb setenv DB_HOST=your-rds-endpoint
+eb setenv DB_PASSWORD=your-secure-password
+
+# For EC2 (add to ~/.bashrc)
+export NODE_ENV=production
+export DB_HOST=your-rds-endpoint
+export DB_PASSWORD=your-secure-password
+```
+
+### 2. Security Groups
+- **Web servers**: Allow HTTP (80), HTTPS (443)
+- **Application servers**: Allow custom port (3001) only from load balancer
+- **Database**: Allow MySQL (3306) only from application servers
+
+### 3. SSL Certificate
+```bash
+# For custom domain with Certificate Manager
+aws acm request-certificate \
+    --domain-name yourdomain.com \
+    --validation-method DNS
+```
+
+---
+
+## Monitoring and Logging
+
+### 1. CloudWatch Logs
+```bash
+# Install CloudWatch agent on EC2
+sudo yum install -y amazon-cloudwatch-agent
+
+# Configure log collection
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
+```
+
+### 2. Application Monitoring
+Add to your `package.json`:
+```json
+{
+  "dependencies": {
+    "winston": "^3.8.2",
+    "aws-cloudwatch-log": "^1.0.0"
+  }
+}
+```
+
+---
+
+## Scaling and Performance
+
+### 1. Load Balancer (for multiple instances)
+```bash
+# Create Application Load Balancer
+aws elbv2 create-load-balancer \
+    --name attendance-app-alb \
+    --subnets subnet-12345 subnet-67890 \
+    --security-groups sg-12345
+```
+
+### 2. Auto Scaling (Elastic Beanstalk)
+```bash
+# Configure auto scaling
+eb config
+# Edit the configuration file to set min/max instances
+```
+
+---
+
+## Cost Optimization
+
+### 1. Instance Types
+- **Development**: t2.micro (free tier)
+- **Production (low traffic)**: t3.small
+- **Production (high traffic)**: t3.medium or higher
+
+### 2. Reserved Instances
+For predictable workloads, consider 1-year reserved instances for 30-40% cost savings.
+
+### 3. Spot Instances
+For non-critical environments, use Spot instances for up to 70% cost savings.
+
+---
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Deployment fails with "Resource not found"**
-   - Verify your App Service name in `azure-pipelines.yml`
-   - Check service connection permissions
+1. **Application won't start**
+   ```bash
+   # Check logs
+   eb logs
+   # or for EC2
+   pm2 logs
+   ```
 
-2. **Build fails on npm install**
-   - Check Node.js version compatibility in pipeline
-   - Verify package.json is valid
+2. **Database connection fails**
+   - Check security groups
+   - Verify connection string
+   - Test connectivity: `telnet db-host 3306`
 
-3. **App doesn't start**
-   - Check App Service logs in Azure Portal
-   - Verify startup command is set correctly
-   - Check if all dependencies are installed
+3. **High response times**
+   - Check CloudWatch metrics
+   - Consider auto-scaling
+   - Optimize database queries
 
-4. **Database/JSON file not persisting**
-   - Consider using Azure SQL Database or Cosmos DB for production
-   - Current JSON file storage will reset on each deployment
+### Useful Commands
 
-### Viewing Logs
-1. Go to Azure Portal → Your App Service
-2. Go to **Monitoring** → **Log stream**
-3. Or use **Advanced Tools** → **Kudu** → **Debug console**
+```bash
+# Elastic Beanstalk
+eb status          # Check environment status
+eb health          # Check application health
+eb logs            # View application logs
+eb ssh             # SSH into instance
 
-## Production Considerations
-
-### 1. Database Upgrade
-For production, consider upgrading from JSON file storage to:
-- **Azure SQL Database** (recommended for enterprise)
-- **Azure Cosmos DB** (NoSQL option)
-- **PostgreSQL** (open source option)
-
-### 2. Security
-- Enable HTTPS only in App Service
-- Configure CORS properly
-- Add authentication if needed
-- Set up proper error handling
-
-### 3. Monitoring
-- Enable Application Insights
-- Set up alerts for downtime
-- Monitor performance metrics
-
-### 4. Scaling
-- Configure auto-scaling rules
-- Consider App Service Plan upgrade for higher traffic
-
-## Environment Variables
-
-For production deployment, you may want to set these environment variables in Azure App Service:
-
+# EC2
+pm2 status         # Check PM2 processes
+pm2 logs           # View application logs
+pm2 restart all    # Restart all processes
 ```
-NODE_ENV=production
-PORT=8080
-```
+
+---
+
+## Production Checklist
+
+- [ ] Set up proper database (RDS/DynamoDB)
+- [ ] Configure environment variables
+- [ ] Set up SSL certificate
+- [ ] Configure monitoring and alerts
+- [ ] Set up automated backups
+- [ ] Configure auto-scaling
+- [ ] Set up CI/CD pipeline
+- [ ] Security group configuration
+- [ ] Load testing completed
+- [ ] Disaster recovery plan
 
 ## Support
 
-If you encounter issues:
-1. Check Azure DevOps pipeline logs
-2. Check Azure App Service logs
-3. Verify all configuration steps
-4. Check Azure service health status
+For additional help:
+1. Check AWS documentation
+2. Review CloudWatch logs and metrics
+3. Use AWS Support (if you have a support plan)
+4. AWS Community forums
 
-Your application should now be successfully deployed and accessible via the Azure App Service URL! 
+Your application should now be successfully deployed on AWS! The URL will be provided by your chosen deployment method (Elastic Beanstalk, EC2 with domain, or App Runner). 

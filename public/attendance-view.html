@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Attendance - Attendance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-clipboard-check"></i> Attendance Tracker</h1>
+                <p>View and export today's attendance</p>
+                <div class="navigation">
+                    <a href="index.html" class="nav-btn">
+                        <i class="fas fa-user-plus"></i> Mark Attendance
+                    </a>
+                    <a href="attendance-view.html" class="nav-btn active">
+                        <i class="fas fa-list"></i> View Attendance
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content-single">
+            <section class="attendance-view-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-list"></i> Today's Attendance</h2>
+                        <div class="header-actions">
+                            <button id="refreshBtn" class="refresh-btn">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                            <button id="exportBtn" class="export-btn">
+                                <i class="fas fa-file-excel"></i>
+                                Export Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <div class="filter-type-selector">
+                            <label>
+                                <i class="fas fa-filter"></i>
+                                Filter Type:
+                            </label>
+                            <select id="filterType" class="filter-type-select">
+                                <option value="day">Daily</option>
+                                <option value="week">Weekly</option>
+                                <option value="month">Monthly</option>
+                            </select>
+                        </div>
+                        
+                        <div class="date-selector" id="dayFilter">
+                            <label for="dateFilter">
+                                <i class="fas fa-calendar-day"></i>
+                                Select Date:
+                            </label>
+                            <input type="date" id="dateFilter" class="date-input">
+                        </div>
+                        
+                        <div class="date-selector" id="weekFilter" style="display: none;">
+                            <label for="weekFilter">
+                                <i class="fas fa-calendar-week"></i>
+                                Select Week:
+                            </label>
+                            <input type="week" id="weekInput" class="date-input">
+                        </div>
+                        
+                        <div class="date-selector" id="monthFilter" style="display: none;">
+                            <label for="monthFilter">
+                                <i class="fas fa-calendar-alt"></i>
+                                Select Month:
+                            </label>
+                            <input type="month" id="monthInput" class="date-input">
+                        </div>
+                        
+                        <button id="filterBtn" class="filter-btn">
+                            <i class="fas fa-search"></i>
+                            Apply Filter
+                        </button>
+                    </div>
+                    
+                    <div class="attendance-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <div>
+                                <h3 id="totalCount">0</h3>
+                                <p>Total Present</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-calendar-day"></i>
+                            <div>
+                                <h3 id="selectedDate">Today</h3>
+                                <p>Selected Date</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="attendance-list">
+                        <div id="attendanceRecords" class="records-container">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                Loading attendance records...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="attendance-view.js"></script>
+</body>
+</html> 

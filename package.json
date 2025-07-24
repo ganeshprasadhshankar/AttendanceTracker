@@ -8,7 +8,12 @@
     "dev": "nodemon server.js",
     "build": "echo 'No build step required'",
     "test": "echo 'No tests specified' && exit 0",
-    "postinstall": "echo 'Dependencies installed successfully'"
+    "postinstall": "echo 'Dependencies installed successfully'",
+    "deploy:eb": "eb deploy",
+    "deploy:init": "eb init",
+    "logs:eb": "eb logs",
+    "status:eb": "eb status",
+    "lint": "echo 'No linting configured' && exit 0"
   },
   "engines": {
     "node": ">=16.0.0",
@@ -22,7 +27,7 @@
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["attendance", "web-app", "sql"],
+  "keywords": ["attendance", "web-app", "sql", "aws", "node.js"],
   "author": "",
   "license": "MIT"
 } 

@@ -1,0 +1,47 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: production
+    
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "Installing dependencies..."
+      - npm ci
+      
+  pre_build:
+    commands:
+      - echo "Running pre-build commands..."
+      - echo "Running tests..."
+      - npm test || echo "No tests found"
+      - echo "Running linting if available..."
+      - npm run lint || echo "No linting configured"
+      
+  build:
+    commands:
+      - echo "Building the application..."
+      - echo "No build step required for this Node.js app"
+      - npm run build || echo "No build script found"
+      
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - echo "Preparing deployment package..."
+      
+artifacts:
+  files:
+    - '**/*'
+  exclude-paths:
+    - node_modules/**/*
+    - .git/**/*
+    - .github/**/*
+    - '*.md'
+    - azure-pipelines.yml
+    - buildspec.yml
+    
+cache:
+  paths:
+    - node_modules/**/* 
