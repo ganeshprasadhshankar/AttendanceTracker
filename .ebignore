@@ -1,0 +1,40 @@
+# Development files
+.git/
+.github/
+.gitignore
+README.md
+DEPLOYMENT.md
+
+# CI/CD files
+azure-pipelines.yml
+buildspec.yml
+.dockerignore
+Dockerfile
+
+# Dependencies (will be installed on server)
+node_modules/
+
+# Test files
+test/
+tests/
+*.test.js
+test-server.js
+
+# Development logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files (use EB environment variables instead)
+.env
+.env.local
+.env.production 
