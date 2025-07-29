@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 env:
-  AWS_REGION: ap-south-1
+  AWS_REGION: us-east-1
   EB_APPLICATION_NAME: attendance-tracker
   EB_ENVIRONMENT_NAME: attendance-app-prod
 
@@ -17,10 +17,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
@@ -108,28 +108,3 @@ jobs:
         sleep 30  # Wait for deployment to stabilize
         curl -f ${{ env.DEPLOYMENT_URL }} || exit 1
         echo "Health check passed!"
-
-  deploy-ec2:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    # Uncomment this job if you want to deploy to EC2 instead of Elastic Beanstalk
-    # and comment out the deploy job above
-    continue-on-error: true  # This job is optional
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        script: |
-          cd /home/ec2-user/attendance-app
-          git pull origin main
-          npm install --production
-          pm2 restart attendance-app || pm2 start server.js --name "attendance-app"
-          pm2 save 
