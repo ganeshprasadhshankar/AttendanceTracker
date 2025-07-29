@@ -72,7 +72,7 @@ jobs:
     
     - name: Deploy to Elastic Beanstalk
       run: |
-        eb init ${{ env.EB_APPLICATION_NAME }} --region ${{ env.AWS_REGION }} --platform "Node.js 18 running on 64bit Amazon Linux 2"
+        eb init ${{ env.EB_APPLICATION_NAME }} --region ${{ env.AWS_REGION }} --platform "Node.js 18 running on 64bit Amazon Linux 2023"
         
         # Check if environment exists, if not create it
         if eb status ${{ env.EB_ENVIRONMENT_NAME }} 2>/dev/null; then
@@ -80,7 +80,7 @@ jobs:
           eb deploy ${{ env.EB_ENVIRONMENT_NAME }} --timeout 20
         else
           echo "Environment doesn't exist, creating it..."
-          eb create ${{ env.EB_ENVIRONMENT_NAME }} --platform "Node.js 18 running on 64bit Amazon Linux 2" --instance-type t3.micro --timeout 20
+          eb create ${{ env.EB_ENVIRONMENT_NAME }} --platform "Node.js 18 running on 64bit Amazon Linux 2023" --instance-type t3.micro --timeout 20
         fi
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
