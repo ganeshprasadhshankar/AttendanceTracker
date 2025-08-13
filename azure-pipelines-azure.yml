@@ -1,0 +1,99 @@
+# Azure DevOps Pipeline for Azure App Service Deployment
+# Build a Node.js Express app and deploy it to Azure App Service
+
+trigger:
+- main
+- master
+
+variables:
+  # Azure configuration
+  azureSubscription: 'Azure-Service-Connection'  # Configure this in Azure DevOps
+  webAppName: 'attendance-tracker-app'
+  resourceGroupName: 'attendance-tracker-rg'
+  
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        npm ci
+        npm run build --if-present
+      displayName: 'npm install and build'
+
+    - script: |
+        npm run test --if-present
+      displayName: 'npm test'
+
+    # Create deployment package for Azure
+    - script: |
+        echo "Creating Azure deployment package..."
+        mkdir -p azure-deployment
+        # Copy application files
+        cp -r public azure-deployment/
+        cp server.js azure-deployment/
+        cp package*.json azure-deployment/
+        cp Procfile azure-deployment/ || echo "Procfile not found, skipping"
+        cp web.config azure-deployment/ || echo "web.config not found, skipping"
+        
+        # Install production dependencies in the deployment folder
+        cd azure-deployment
+        npm ci --production
+        cd ..
+        
+        ls -la azure-deployment/
+      displayName: 'Create Azure deployment package'
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive Azure deployment files'
+      inputs:
+        rootFolderOrFile: 'azure-deployment'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/azure-deployment-$(Build.BuildId).zip
+        replaceExistingArchive: true
+
+    - upload: $(Build.ArtifactStagingDirectory)/azure-deployment-$(Build.BuildId).zip
+      artifact: azure-drop
+
+- stage: Deploy
+  displayName: Deploy to Azure
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeployAzure
+    displayName: Deploy to Azure App Service
+    environment: 'production'
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: azure-drop
+            
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure App Service'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: 'webAppLinux'
+              appName: $(webAppName)
+              runtimeStack: 'NODE|18-lts'
+              package: $(Pipeline.Workspace)/azure-drop/azure-deployment-$(Build.BuildId).zip
+              appSettings: |
+                -NODE_ENV production
+                -WEBSITE_NODE_DEFAULT_VERSION 18.x 
